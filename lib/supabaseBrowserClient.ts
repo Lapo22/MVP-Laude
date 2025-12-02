@@ -17,18 +17,28 @@ const ensureEnv = () => {
 };
 
 export const getSupabaseBrowserClient = (): SupabaseClient | null => {
-  ensureEnv();
-
   if (typeof window === "undefined") {
     return null;
   }
 
+  try {
+    ensureEnv();
+  } catch (error) {
+    console.error("[supabaseBrowserClient] Environment check failed:", error);
+    return null;
+  }
+
   if (!browserClient) {
-    browserClient = createBrowserClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-      cookieOptions: {
-        name: "sb-access-token",
-      },
-    });
+    try {
+      browserClient = createBrowserClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+        cookieOptions: {
+          name: "sb-access-token",
+        },
+      });
+    } catch (error) {
+      console.error("[supabaseBrowserClient] Failed to create client:", error);
+      return null;
+    }
   }
 
   return browserClient;

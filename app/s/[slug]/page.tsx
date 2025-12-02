@@ -2,6 +2,10 @@ import PublicStructureExperience from "@/components/client/PublicStructureExperi
 import type { Employee, Structure, Team } from "@/types";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
+// Force dynamic rendering to ensure Vercel routes this correctly
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 type Params = Promise<{
   slug: string;
 }>;

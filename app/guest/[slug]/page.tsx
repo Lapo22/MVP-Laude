@@ -70,7 +70,7 @@ const loadStructureData = async (
     return {
       structure: null,
       teams: [],
-      error: error instanceof Error ? error.message : "Failed to load structure data.",
+      error: "We could not load this page. Please check your connection and try again.",
     };
   }
 };
@@ -100,7 +100,7 @@ export default async function StructurePage({ params }: { params: Params }) {
       return (
         <StateCard
           title="We're sorry"
-          description="An error occurred while loading this page."
+          description={error}
         />
       );
     }

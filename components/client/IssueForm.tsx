@@ -7,7 +7,7 @@ type IssueFormProps = {
   structureName: string;
 };
 
-const MAX_MESSAGE_LENGTH = 140;
+const MAX_MESSAGE_LENGTH = 200;
 
 const IssueForm = ({ structureId, structureName }: IssueFormProps) => {
   const [message, setMessage] = useState("");
@@ -39,7 +39,6 @@ const IssueForm = ({ structureId, structureName }: IssueFormProps) => {
           structure_id: structureId,
           message: message.trim(),
           room_or_name: roomOrName.trim() || null,
-          structure_name: structureName,
         }),
       });
 
@@ -59,18 +58,18 @@ const IssueForm = ({ structureId, structureName }: IssueFormProps) => {
   };
 
   return (
-    <section className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 shadow-sm md:p-5">
-      <div className="mb-5 space-y-2">
-        <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">Something not right?</h2>
-        <p className="text-sm text-gray-700">
-          Tell us what's wrong so we can help you during your stay.
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
+      <div className="mb-6 space-y-2">
+        <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">Something wrong?</h2>
+        <p className="text-sm text-gray-600 md:text-base">
+          Tell us if something is not as it should be. We'll do our best to fix it quickly.
         </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label htmlFor="issue-message" className="text-sm font-medium text-gray-700">
-            Message
+          <label htmlFor="issue-message" className="block text-sm font-medium text-gray-700">
+            Describe the issue
           </label>
           <textarea
             id="issue-message"
@@ -80,16 +79,17 @@ const IssueForm = ({ structureId, structureName }: IssueFormProps) => {
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder="Describe briefly what happened…"
-            className="min-h-[90px] w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="min-h-[100px] w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            aria-describedby="message-length"
           />
-          <div className="flex justify-end text-xs text-gray-500">
+          <div id="message-length" className="flex justify-end text-xs text-gray-500">
             {message.length}/{MAX_MESSAGE_LENGTH}
           </div>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="issue-room" className="text-sm font-medium text-gray-700">
-            Room number or name (optional)
+          <label htmlFor="issue-room" className="block text-sm font-medium text-gray-700">
+            Room number or name <span className="text-gray-400">(optional)</span>
           </label>
           <input
             id="issue-room"
@@ -105,28 +105,28 @@ const IssueForm = ({ structureId, structureName }: IssueFormProps) => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-xl bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
+          className="w-full rounded-xl bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Sending…" : "Send report"}
+          {isSubmitting ? "Sending your message…" : "Send report"}
         </button>
 
-        {status === "success" ? (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {status === "success" && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <span>Thank you, we have received your report.</span>
+            <span>Thank you, we have received your message.</span>
           </div>
-        ) : null}
+        )}
 
-        {status === "error" && error ? (
-          <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {status === "error" && error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{error}</span>
           </div>
-        ) : null}
+        )}
       </form>
     </section>
   );

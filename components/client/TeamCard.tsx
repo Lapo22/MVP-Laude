@@ -11,7 +11,7 @@ type TeamCardProps = {
   structureId: string;
   disabled: boolean;
   selections: Record<string, RatingValue>;
-  onRatingSelect: (entityKey: string, rating: RatingValue) => void;
+  onRatingSelect: (entityKey: string, rating: RatingValue | null) => void;
 };
 
 const TeamCard = ({
@@ -24,11 +24,11 @@ const TeamCard = ({
   const teamKey = `team-${team.id}`;
   const teamSelection = selections[teamKey] ?? null;
 
-  const [expanded, setExpanded] = useState(Boolean(teamSelection));
+  const [expanded, setExpanded] = useState(Boolean(teamSelection) || team.employees.length > 0);
 
-  const handleTeamRatingSelect = (rating: RatingValue) => {
+  const handleTeamRatingSelect = (rating: RatingValue | null) => {
     onRatingSelect(teamKey, rating);
-    if (!expanded) {
+    if (rating !== null && !expanded) {
       setExpanded(true);
     }
   };
@@ -40,21 +40,23 @@ const TeamCard = ({
   };
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5">
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
       <button
         type="button"
         onClick={toggleExpanded}
         disabled={disabled}
         className="flex w-full items-center justify-between gap-4 text-left transition-colors hover:bg-gray-50/50 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-expanded={expanded}
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex-1">
           <h2 className="text-lg font-semibold text-gray-900 md:text-xl">{team.name}</h2>
-          <p className="text-xs text-gray-500 md:text-sm">Rate this team and its staff</p>
+          <p className="mt-1 text-sm text-gray-600">Team</p>
         </div>
         <svg
           className={`h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`}
           viewBox="0 0 24 24"
           fill="none"
+          aria-hidden="true"
         >
           <path
             d="M6 9l6 6 6-6"
@@ -66,24 +68,25 @@ const TeamCard = ({
         </svg>
       </button>
 
-      {expanded ? (
-        <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
-          {/* Sezione voto team */}
-          <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4 md:flex-row md:items-center md:justify-between">
+      {expanded && (
+        <div className="mt-5 space-y-5 border-t border-gray-100 pt-5">
+          {/* Team Rating */}
+          <div className="flex flex-col gap-3 rounded-xl bg-gray-50 p-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-700">Team rating</p>
+              <p className="text-sm font-medium text-gray-700">Rate this team</p>
             </div>
             <RatingFaces
-              ariaLabel={`${team.name} rating`}
+              ariaLabel={`${team.name} team rating`}
               currentSelection={teamSelection ?? null}
               disabled={disabled}
               onSelect={handleTeamRatingSelect}
+              size="md"
             />
           </div>
 
-          {/* Lista dipendenti */}
-          {team.employees.length > 0 ? (
-            <div className="space-y-3 border-t border-gray-100 pt-3">
+          {/* Staff Members */}
+          {team.employees.length > 0 && (
+            <div className="space-y-3 border-t border-gray-100 pt-5">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 md:text-sm">
                 Staff members
               </p>
@@ -102,9 +105,9 @@ const TeamCard = ({
                 })}
               </div>
             </div>
-          ) : null}
+          )}
         </div>
-      ) : null}
+      )}
     </section>
   );
 };

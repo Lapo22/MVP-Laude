@@ -7,7 +7,7 @@ type EmployeeCardProps = {
   employee: Employee;
   selection: RatingValue | null;
   disabled: boolean;
-  onSelect: (value: RatingValue) => void;
+  onSelect: (value: RatingValue | null) => void;
 };
 
 const EmployeeCard = ({
@@ -17,14 +17,14 @@ const EmployeeCard = ({
   onSelect,
 }: EmployeeCardProps) => {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-gray-100 bg-white py-2.5 transition-colors hover:bg-gray-50 md:flex-row md:items-center md:justify-between md:px-3">
-      <div className="flex-1 px-3 md:px-0">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 md:flex-row md:items-center md:justify-between">
+      <div className="flex-1">
         <p className="font-medium text-gray-900">{employee.name}</p>
-        <p className="text-xs text-gray-500">{employee.role}</p>
+        <p className="mt-0.5 text-sm text-gray-500">{employee.role}</p>
       </div>
-      <div className="flex justify-start px-3 md:justify-end md:px-0">
+      <div className="flex justify-start md:justify-end">
         <RatingFaces
-          ariaLabel={`${employee.name} rating`}
+          ariaLabel={`${employee.name} (${employee.role}) rating`}
           currentSelection={selection}
           disabled={disabled}
           onSelect={onSelect}

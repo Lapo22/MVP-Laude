@@ -6,7 +6,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    files: ["app/s/**/*.{ts,tsx}"],
+    files: ["app/guest/**/*.{ts,tsx}"],
     rules: {
       "react-hooks/error-boundaries": "off",
     },

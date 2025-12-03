@@ -17,10 +17,10 @@ const EmployeeCard = ({
   onSelect,
 }: EmployeeCardProps) => {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-2.5 rounded-xl border border-[#E9E4DA] bg-white p-3.5 transition-all duration-150 hover:bg-[#FAFAF8] hover:shadow-sm md:flex-row md:items-center md:justify-between">
       <div className="flex-1">
-        <p className="font-medium text-gray-900">{employee.name}</p>
-        <p className="mt-0.5 text-sm text-gray-500">{employee.role}</p>
+        <p className="font-medium tracking-wide text-[#1F2933]">{employee.name}</p>
+        <p className="mt-0.5 text-sm tracking-wide text-[#6A6A6A]">— {employee.role}</p>
       </div>
       <div className="flex justify-start md:justify-end">
         <RatingFaces

@@ -2,7 +2,6 @@ import PublicStructureExperience from "@/components/client/PublicStructureExperi
 import type { Employee, Structure, Team } from "@/types";
 import { createSupabaseServerClient } from "@/lib/supabaseClient";
 
-// Force dynamic rendering to ensure Vercel routes this correctly
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
@@ -21,8 +20,7 @@ const loadStructureData = async (
     return {
       structure: null,
       teams: [],
-      error:
-        "Configuration error: Supabase environment variables are missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local.",
+      error: "We couldn't load this page. Please try again in a moment.",
     };
   }
 
@@ -70,22 +68,18 @@ const loadStructureData = async (
     return {
       structure: null,
       teams: [],
-      error: "We could not load this page. Please check your connection and try again.",
+      error: "We couldn't load this page. Please try again in a moment.",
     };
   }
 };
 
-const StateCard = ({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) => (
-  <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-4 py-16">
-    <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
-      <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
-      <p className="mt-3 text-sm text-gray-600">{description}</p>
+const ErrorState = ({ message }: { message: string }) => (
+  <div className="flex min-h-screen items-center justify-center premium-bg px-4 py-16">
+    <div className="w-full max-w-md rounded-3xl border border-[#E9E4DA] bg-white p-8 text-center shadow-[0_4px_15px_rgba(0,0,0,0.06)]">
+      <h1 className="mb-3 font-serif text-2xl font-medium text-[#0F172A] md:text-3xl" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        We're sorry
+      </h1>
+      <p className="text-sm text-[#6A6A6A]">{message}</p>
     </div>
   </div>
 );
@@ -97,34 +91,21 @@ export default async function StructurePage({ params }: { params: Params }) {
     const { structure, teams, error } = await loadStructureData(slug);
 
     if (error) {
-      return (
-        <StateCard
-          title="We're sorry"
-          description={error}
-        />
-      );
+      return <ErrorState message={error} />;
     }
 
     if (!structure) {
       return (
-        <StateCard
-          title="Structure not found"
-          description="This link is not associated with an active structure."
-        />
+        <ErrorState message="This link is not associated with an active structure." />
       );
     }
 
     return (
-      <div className="min-h-screen bg-[#F5F5F7]">
-        <PublicStructureExperience structure={structure} teams={teams} />
-      </div>
+      <PublicStructureExperience structure={structure} teams={teams} />
     );
   } catch {
     return (
-      <StateCard
-        title="We're sorry"
-        description="An error occurred while loading this page."
-      />
+      <ErrorState message="An error occurred while loading this page." />
     );
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import TeamCard from "./TeamCard";
 import IssueForm from "./IssueForm";
+import Toast from "./Toast";
 import type { Structure } from "@/types";
 import type { TeamWithEmployees } from "./types";
 import type { RatingValue } from "./RatingFaces";
@@ -56,6 +57,99 @@ const useFeedbackCooldown = (slug: string) => {
   return { isLocked: mounted ? isLocked : false, activateCooldown };
 };
 
+// Design tokens - unified spacing and styling
+const SPACING = {
+  xs: "0.5rem", // 8px
+  sm: "0.75rem", // 12px
+  md: "1rem", // 16px
+  lg: "1.5rem", // 24px
+  xl: "2rem", // 32px
+};
+
+const PageHeader = ({ structureName }: { structureName: string }) => (
+  <header className="mb-8 text-center animate-fade-in md:mb-10">
+    <div className="mx-auto mb-3 h-[1.5px] w-10 bg-[#C9A15B]"></div>
+    <h1 
+      className="mb-3 font-serif text-3xl font-medium tracking-tight text-[#0F172A] md:text-4xl" 
+      style={{ 
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        textShadow: '0 0.3px 0.3px rgba(0,0,0,0.1)'
+      }}
+    >
+      {structureName}
+    </h1>
+    <div className="mx-auto mb-4 h-[1.5px] w-10 bg-[#C9A15B]"></div>
+    <p className="mb-2 text-base leading-relaxed tracking-wide text-[#6A6A6A] md:text-lg">
+      We'd love to hear about your experience.
+    </p>
+    <p className="text-sm leading-relaxed tracking-wide text-[#6A6A6A] md:text-base">
+      Your feedback helps us celebrate great service and improve even more.
+    </p>
+  </header>
+);
+
+const InfoBanner = ({ 
+  message, 
+  variant = "info" 
+}: { 
+  message: string; 
+  variant?: "info" | "error";
+}) => (
+  <div 
+    className={`mb-6 animate-fade-in rounded-3xl border px-4 py-3 text-center text-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${
+      variant === "error"
+        ? "border-red-200 bg-red-50/90 text-red-800"
+        : "border-[#E9E4DA] bg-white/90 text-[#6A6A6A]"
+    }`}
+  >
+    <span>{message}</span>
+  </div>
+);
+
+const SubmitButton = ({
+  onClick,
+  disabled,
+  isSubmitting,
+  label = "Submit your feedback",
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  isSubmitting: boolean;
+  label?: string;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className="group w-full rounded-2xl border border-[#C9A15B]/40 bg-gradient-to-b from-[#0F172A] to-[#1B2436] px-8 py-4 text-base font-medium tracking-wide text-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] transition-all duration-200 hover:from-[#152238] hover:to-[#1E293B] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:ring-offset-2 focus:ring-offset-[#F6F3EE] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-[0_4px_15px_rgba(0,0,0,0.15)]"
+  >
+    <span className="flex items-center justify-center gap-2.5">
+      {isSubmitting ? (
+        <>
+          <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <span>Sending your feedback…</span>
+        </>
+      ) : (
+        <>
+          <span>{label}</span>
+          <svg className="h-4 w-4 text-[#C9A15B] transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </>
+      )}
+    </span>
+  </button>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="animate-fade-in rounded-3xl border border-[#E9E4DA] bg-white p-12 text-center shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+    <p className="text-sm text-[#6A6A6A]">{message}</p>
+  </div>
+);
+
 const PublicStructureExperience = ({
   structure,
   teams,
@@ -63,19 +157,17 @@ const PublicStructureExperience = ({
   const [selections, setSelections] = useState<SelectionMap>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const { isLocked, activateCooldown } = useFeedbackCooldown(structure.slug);
 
   const handleRatingSelect = (entityKey: string, rating: RatingValue | null) => {
     if (isLocked) return;
     setSelections((prev) => {
       if (rating === null) {
-        // Deselect: remove the entry
         const newSelections = { ...prev };
         delete newSelections[entityKey];
         return newSelections;
       }
-      // Set the new rating
       return { ...prev, [entityKey]: rating };
     });
     setError(null);
@@ -93,7 +185,7 @@ const PublicStructureExperience = ({
 
     setIsSubmitting(true);
     setError(null);
-    setShowSuccessMessage(false);
+    setShowToast(false);
 
     try {
       const votePromises = selectedVotes.map(async ([entityKey, rating]) => {
@@ -151,8 +243,7 @@ const PublicStructureExperience = ({
 
       activateCooldown();
       setSelections({});
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 5000);
+      setShowToast(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -164,98 +255,61 @@ const PublicStructureExperience = ({
   const submitDisabled = isLocked || isSubmitting || !hasSelectedRatings;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6 md:py-8 lg:py-10">
-        {/* Header */}
-        <header className="mb-8 space-y-3 text-center md:mb-10">
-          <div className="flex justify-center">
-            <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">
-              {structure.name}
-            </h1>
-          </div>
-          <p className="mx-auto max-w-md text-sm text-gray-600 md:text-base">
-            Help us reward the people who made your stay better.
-          </p>
-        </header>
+    <div className="min-h-screen premium-bg">
+      {showToast && (
+        <Toast
+          message="Thank you. Your feedback has been received."
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
+      
+      <div className="relative mx-auto w-full max-w-[540px] px-5 py-8 md:px-8 md:py-12">
+        <PageHeader structureName={structure.name} />
 
-        {/* Cooldown Banner */}
         {isLocked && (
-          <div className="mx-auto mb-6 max-w-2xl rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-center text-sm text-blue-700">
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>You have already sent feedback recently. You can vote again later.</span>
-            </div>
-          </div>
+          <InfoBanner message="You've already submitted feedback recently. You'll be able to rate again later." />
         )}
 
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="mx-auto mb-6 max-w-2xl rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-700">
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Thank you! Your feedback has been submitted.</span>
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
         {error && (
-          <div className="mx-auto mb-6 max-w-2xl rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-700">
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          </div>
+          <InfoBanner message={error} variant="error" />
         )}
 
-        {/* Voting Section */}
-        <section className="mx-auto mb-8 max-w-2xl space-y-6">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 md:text-base">
-              Rate the teams and people who made your stay better. Your feedback is anonymous.
-            </p>
-          </div>
-
+        <section className="mb-8 space-y-4">
           {teams.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
-              No active teams found for this structure.
-            </div>
+            <EmptyState message="This property is not yet ready to receive feedback." />
           ) : (
             <div className="space-y-4">
-              {teams.map((team) => (
-                <TeamCard
+              {teams.map((team, index) => (
+                <div
                   key={team.id}
-                  team={team}
-                  structureId={structure.id}
-                  disabled={isLocked || showSuccessMessage}
-                  selections={selections}
-                  onRatingSelect={handleRatingSelect}
-                />
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  <TeamCard
+                    team={team}
+                    structureId={structure.id}
+                    disabled={isLocked}
+                    selections={selections}
+                    onRatingSelect={handleRatingSelect}
+                  />
+                </div>
               ))}
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="pt-4">
-            <button
-              type="button"
+            <SubmitButton
               onClick={handleSubmitFeedback}
               disabled={submitDisabled}
-              className="w-full rounded-xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-blue-600"
-            >
-              {isSubmitting ? "Sending your feedback…" : "Submit feedback"}
-            </button>
+              isSubmitting={isSubmitting}
+            />
           </div>
         </section>
 
-        {/* Something Wrong Section */}
-        <section className="mx-auto max-w-2xl">
+        <div className="my-8 h-px bg-[#E9E4DA]"></div>
+
+        <section className="animate-fade-in" style={{ animationDelay: `${teams.length * 60 + 100}ms` }}>
           <IssueForm structureId={structure.id} structureName={structure.name} />
         </section>
       </div>

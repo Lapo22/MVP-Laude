@@ -1,8 +1,22 @@
 import { Resend } from "resend";
 
 const resendKey = process.env.RESEND_API_KEY;
-const emailFrom = process.env.EMAIL_FROM ?? "Segnalazioni Hotel <noreply@example.com>";
+const emailFrom = process.env.RESEND_FROM_EMAIL;
 const issueSubject = process.env.EMAIL_SUBJECT_ISSUE ?? "Nuova segnalazione da un ospite";
+
+// Log env status (without exposing values)
+console.log("[email] Environment check:", {
+  hasResendKey: !!resendKey,
+  hasFromEmail: !!emailFrom,
+});
+
+if (!resendKey) {
+  console.warn("[email] RESEND_API_KEY non configurata, email disabilitate.");
+}
+
+if (!emailFrom) {
+  console.warn("[email] RESEND_FROM_EMAIL non configurata, email non possono essere inviate.");
+}
 
 const resendClient = resendKey ? new Resend(resendKey) : null;
 
@@ -32,18 +46,26 @@ export const sendIssueEmail = async ({
   message,
   guestInfo,
   createdAt,
-}: SendIssueEmailParams) => {
+}: SendIssueEmailParams): Promise<{ success: boolean; error?: string }> => {
   if (!to) {
-    console.warn("[email] Destinatario email non valido:", to);
-    return;
+    const error = "Destinatario email non valido";
+    console.error("[ISSUE_EMAIL_ERROR] Destinatario mancante");
+    return { success: false, error };
   }
 
   if (!resendClient) {
-    console.warn("[email] RESEND_API_KEY non configurata, email disabilitate.");
-    return;
+    const error = "RESEND_API_KEY non configurata";
+    console.error("[ISSUE_EMAIL_ERROR]", error);
+    return { success: false, error };
   }
 
-  console.log(`[email] Invio email a ${to} per struttura ${structureName}...`);
+  if (!emailFrom) {
+    const error = "RESEND_FROM_EMAIL non configurata";
+    console.error("[ISSUE_EMAIL_ERROR]", error);
+    return { success: false, error };
+  }
+
+  console.log(`[ISSUE_EMAIL] Invio email a ${to} per struttura ${structureName}...`);
 
   try {
     const formattedDate = formatDate(createdAt);
@@ -73,12 +95,24 @@ export const sendIssueEmail = async ({
       text: textContent,
     });
 
-    console.log(`[email] Email inviata con successo a ${to}. ID:`, result.data?.id);
-  } catch (error) {
-    console.error(`[email] Invio email fallito verso ${to}:`, error);
-    if (error instanceof Error) {
-      console.error(`[email] Dettagli errore:`, error.message);
+    // Check for Resend API errors in response
+    if (result.error) {
+      const error = `Resend API error: ${JSON.stringify(result.error)}`;
+      console.error("[ISSUE_EMAIL_ERROR]", error);
+      return { success: false, error };
     }
+
+    console.log(`[ISSUE_EMAIL] Email inviata con successo a ${to}. ID:`, result.data?.id);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[ISSUE_EMAIL_ERROR] Invio email fallito verso ${to}:`, errorMessage);
+    
+    // Log full error details for debugging (server-side only)
+    if (error instanceof Error) {
+      console.error("[ISSUE_EMAIL_ERROR] Stack:", error.stack);
+    }
+    
+    return { success: false, error: "EMAIL_SEND_FAILED" };
   }
 };
-

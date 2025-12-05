@@ -4,9 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type PeriodFilterProps = {
   currentPeriod: "7d" | "30d" | "all";
+  basePath?: string;
 };
 
-const PeriodFilter = ({ currentPeriod }: PeriodFilterProps) => {
+const PeriodFilter = ({ currentPeriod, basePath = "/admin" }: PeriodFilterProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -17,7 +18,7 @@ const PeriodFilter = ({ currentPeriod }: PeriodFilterProps) => {
     } else {
       params.set("period", period);
     }
-    router.push(`/admin?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
     router.refresh();
   };
 
@@ -28,7 +29,7 @@ const PeriodFilter = ({ currentPeriod }: PeriodFilterProps) => {
         onClick={() => handlePeriodChange("7d")}
         className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
           currentPeriod === "7d"
-            ? "bg-blue-600 text-white shadow-sm"
+            ? "bg-[#0F172A] text-white shadow-sm"
             : "text-gray-600 hover:bg-gray-50"
         }`}
       >
@@ -39,7 +40,7 @@ const PeriodFilter = ({ currentPeriod }: PeriodFilterProps) => {
         onClick={() => handlePeriodChange("30d")}
         className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
           currentPeriod === "30d"
-            ? "bg-blue-600 text-white shadow-sm"
+            ? "bg-[#0F172A] text-white shadow-sm"
             : "text-gray-600 hover:bg-gray-50"
         }`}
       >
@@ -50,7 +51,7 @@ const PeriodFilter = ({ currentPeriod }: PeriodFilterProps) => {
         onClick={() => handlePeriodChange("all")}
         className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
           currentPeriod === "all"
-            ? "bg-blue-600 text-white shadow-sm"
+            ? "bg-[#0F172A] text-white shadow-sm"
             : "text-gray-600 hover:bg-gray-50"
         }`}
       >

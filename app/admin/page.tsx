@@ -316,7 +316,7 @@ export default async function AdminDashboardPage({
 
       {/* Period Filter */}
       <div className="flex justify-end">
-        <PeriodFilter currentPeriod={periodParam} />
+        <PeriodFilter currentPeriod={periodParam} basePath="/admin" />
       </div>
 
       {/* KPI Cards */}

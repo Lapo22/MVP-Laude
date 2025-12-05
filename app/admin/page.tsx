@@ -17,7 +17,7 @@ const getPeriodStartDate = (period: "7d" | "30d" | "all"): string | null => {
   return date.toISOString();
 };
 
-const MIN_FEEDBACK_FOR_STAFF_INSIGHTS = 3;
+const MIN_FEEDBACK_FOR_STAFF_INSIGHTS = 5;
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -41,8 +41,30 @@ export default async function AdminDashboardPage({
   const sevenDaysAgoISO = sevenDaysAgo.toISOString();
 
   // ============================================
-  // 1. USAGE & HEALTH SECTION
+  // 1. KPI CARDS - Calculate average score and other metrics
   // ============================================
+
+  // Get all votes in period for average calculation
+  const votesQuery = supabase
+    .from("votes")
+    .select("rating")
+    .eq("structure_id", structure.id);
+  if (periodStartDate) {
+    votesQuery.gte("created_at", periodStartDate);
+  }
+  const { data: votes } = await votesQuery;
+
+  const averageScore = votes && votes.length > 0
+    ? votes.reduce((sum, vote) => sum + vote.rating, 0) / votes.length
+    : null;
+
+  const getScoreLabel = (score: number | null): string => {
+    if (score === null) return "Nessun dato";
+    if (score >= 2.5) return "Eccellente";
+    if (score >= 2.0) return "Molto buono";
+    if (score >= 1.5) return "Buono";
+    return "Richiede attenzione";
+  };
 
   // Query per totale feedback nel periodo
   const totalFeedbackQuery = supabase
@@ -53,25 +75,40 @@ export default async function AdminDashboardPage({
     totalFeedbackQuery.gte("created_at", periodStartDate);
   }
 
+  // Active teams count
+  const { count: activeTeamsCount } = await supabase
+    .from("teams")
+    .select("*", { count: "exact", head: true })
+    .eq("structure_id", structure.id)
+    .eq("is_active", true);
+
   const [
     { count: totalFeedbackInPeriod },
     { count: feedbackLast7Days },
+    { count: totalIssuesInPeriod },
   ] = await Promise.all([
-    // Totale feedback nel periodo
     totalFeedbackQuery,
-    // Feedback ultimi 7 giorni (indipendente dal filtro)
     supabase
       .from("votes")
       .select("*", { count: "exact", head: true })
       .eq("structure_id", structure.id)
       .gte("created_at", sevenDaysAgoISO),
+    (() => {
+      const issuesQuery = supabase
+        .from("issues")
+        .select("*", { count: "exact", head: true })
+        .eq("structure_id", structure.id);
+      if (periodStartDate) {
+        issuesQuery.gte("created_at", periodStartDate);
+      }
+      return issuesQuery;
+    })(),
   ]);
 
   // ============================================
   // 2. TEAM PERFORMANCE SECTION
   // ============================================
 
-  // Recupera tutti i team con i loro voti nel periodo
   const teamVotesQuery = supabase
     .from("votes")
     .select("team_id, rating, created_at")
@@ -84,7 +121,6 @@ export default async function AdminDashboardPage({
     ascending: false,
   });
 
-  // Calcola statistiche per team
   const teamStatsMap = new Map<
     string,
     { ratings: number[]; lastFeedbackAt: string | null }
@@ -105,7 +141,6 @@ export default async function AdminDashboardPage({
     }
   }
 
-  // Recupera nomi dei team
   const teamIds = Array.from(teamStatsMap.keys());
   const { data: teamsData } =
     teamIds.length > 0
@@ -131,29 +166,18 @@ export default async function AdminDashboardPage({
       };
     }) || [];
 
-  // Ordina per media più bassa (per evidenziare problemi)
+  // Sort by average rating (highest first) for top performing teams
   teamPerformanceRows.sort((a, b) => {
     if (a.averageRating === null && b.averageRating === null) return 0;
     if (a.averageRating === null) return 1;
     if (b.averageRating === null) return -1;
-    return a.averageRating - b.averageRating;
+    return b.averageRating - a.averageRating;
   });
-
-  // Issues totali nel periodo
-  const issuesCountQuery = supabase
-    .from("issues")
-    .select("*", { count: "exact", head: true })
-    .eq("structure_id", structure.id);
-  if (periodStartDate) {
-    issuesCountQuery.gte("created_at", periodStartDate);
-  }
-  const { count: totalIssuesInPeriod } = await issuesCountQuery;
 
   // ============================================
   // 3. STAFF INSIGHTS SECTION
   // ============================================
 
-  // Recupera voti per dipendenti nel periodo
   const employeeVotesQuery = supabase
     .from("votes")
     .select("employee_id, rating")
@@ -164,7 +188,6 @@ export default async function AdminDashboardPage({
   }
   const { data: employeeVotes } = await employeeVotesQuery;
 
-  // Calcola statistiche per dipendente
   const employeeStatsMap = new Map<
     string,
     { ratings: number[]; count: number }
@@ -183,7 +206,6 @@ export default async function AdminDashboardPage({
     }
   }
 
-  // Filtra dipendenti con almeno MIN_FEEDBACK_FOR_STAFF_INSIGHTS feedback
   const employeesWithEnoughFeedback = Array.from(employeeStatsMap.entries())
     .filter(([_, stats]) => stats.count >= MIN_FEEDBACK_FOR_STAFF_INSIGHTS)
     .map(([employeeId, stats]) => ({
@@ -192,7 +214,6 @@ export default async function AdminDashboardPage({
       feedbackCount: stats.count,
     }));
 
-  // Recupera dati dipendenti
   const employeeIds = employeesWithEnoughFeedback.map((e) => e.employeeId);
   const { data: employeesData } =
     employeeIds.length > 0
@@ -203,7 +224,6 @@ export default async function AdminDashboardPage({
           .in("id", employeeIds)
       : { data: [] };
 
-  // Recupera nomi dei team per i dipendenti
   const teamIdsForEmployees = new Set(
     employeesData?.map((e) => e.team_id).filter(Boolean) || [],
   );
@@ -217,7 +237,6 @@ export default async function AdminDashboardPage({
 
   const teamNameMap = new Map(teamsForEmployees?.map((t) => [t.id, t.name]) || []);
 
-  // Costruisci lista completa dipendenti
   const staffMembers =
     employeesData?.map((employee) => {
       const stats = employeesWithEnoughFeedback.find(
@@ -233,7 +252,6 @@ export default async function AdminDashboardPage({
       };
     }) || [];
 
-  // Top staff (media più alta)
   const topStaff = [...staffMembers]
     .sort((a, b) => {
       if (Math.abs(a.averageRating - b.averageRating) < 0.01) {
@@ -241,9 +259,8 @@ export default async function AdminDashboardPage({
       }
       return b.averageRating - a.averageRating;
     })
-    .slice(0, 5);
+    .slice(0, 3);
 
-  // Staff da monitorare (media più bassa)
   const staffToMonitor = [...staffMembers]
     .sort((a, b) => {
       if (Math.abs(a.averageRating - b.averageRating) < 0.01) {
@@ -251,7 +268,7 @@ export default async function AdminDashboardPage({
       }
       return a.averageRating - b.averageRating;
     })
-    .slice(0, 5);
+    .slice(0, 3);
 
   // ============================================
   // 4. ISSUES OVERVIEW SECTION
@@ -262,19 +279,16 @@ export default async function AdminDashboardPage({
     { count: unreadIssuesCount },
     { data: recentIssuesData },
   ] = await Promise.all([
-    // Issues ultimi 7 giorni (indipendente dal filtro)
     supabase
       .from("issues")
       .select("*", { count: "exact", head: true })
       .eq("structure_id", structure.id)
       .gte("created_at", sevenDaysAgoISO),
-    // Issues non lette (tutte, indipendente dal filtro)
     supabase
       .from("issues")
       .select("*", { count: "exact", head: true })
       .eq("structure_id", structure.id)
       .eq("is_read", false),
-    // Ultime 5 issues
     supabase
       .from("issues")
       .select("id, message, is_read, created_at")
@@ -292,33 +306,83 @@ export default async function AdminDashboardPage({
     })) || [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Panoramica delle performance e dello stato del tuo staff
-          </p>
-        </div>
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="border-b border-gray-200 pb-6">
+        <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">Panoramica</h1>
+        <p className="mt-2 text-lg text-gray-600">{structure.name}</p>
+        <p className="mt-1 text-sm text-gray-500">Feedback degli ospiti a colpo d'occhio.</p>
+      </div>
+
+      {/* Period Filter */}
+      <div className="flex justify-end">
         <PeriodFilter currentPeriod={periodParam} />
       </div>
 
-      {/* 1. Usage & Health */}
-      <UsageHealthSection
-        totalFeedbackInPeriod={totalFeedbackInPeriod || 0}
-        feedbackLast7Days={feedbackLast7Days || 0}
-      />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Media voti</p>
+          <p className="mt-2 text-3xl font-semibold text-gray-900">
+            {averageScore !== null ? `${averageScore.toFixed(1)} / 3` : "–"}
+          </p>
+          <p className="mt-1 text-sm text-gray-600">{getScoreLabel(averageScore)}</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Totale voti</p>
+          <p className="mt-2 text-3xl font-semibold text-gray-900">{totalFeedbackInPeriod || 0}</p>
+          <p className="mt-1 text-sm text-gray-600">Nel periodo selezionato</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Team attivi</p>
+          <p className="mt-2 text-3xl font-semibold text-gray-900">{activeTeamsCount || 0}</p>
+          <p className="mt-1 text-sm text-gray-600">Attualmente attivi</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Segnalazioni</p>
+          <p className="mt-2 text-3xl font-semibold text-gray-900">{totalIssuesInPeriod || 0}</p>
+          <p className="mt-1 text-sm text-gray-600">Nel periodo selezionato</p>
+        </div>
+      </div>
 
-      {/* 2. Team Performance */}
-      <TeamPerformanceTable
-        teams={teamPerformanceRows}
-        totalIssuesInPeriod={totalIssuesInPeriod || 0}
-      />
+      {/* Team Performance */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Team migliori</h2>
+          <p className="mt-1 text-sm text-gray-500">Team classificati per media voti degli ospiti</p>
+        </div>
+        {teamPerformanceRows.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-sm text-gray-500">Dati insufficienti</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="space-y-4">
+              {teamPerformanceRows.slice(0, 3).map((team) => (
+                <div
+                  key={team.teamId}
+                  className="flex items-center justify-between border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{team.teamName}</p>
+                    <p className="mt-1 text-sm text-gray-600">{team.feedbackCount} voti</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-gray-900">
+                      {team.averageRating !== null ? `${team.averageRating.toFixed(1)} / 3` : "–"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* 3. Staff Insights */}
+      {/* Staff Highlights */}
       <StaffInsightsSection topStaff={topStaff} staffToMonitor={staffToMonitor} />
 
-      {/* 4. Issues Overview */}
+      {/* Issues Snapshot */}
       <IssuesOverviewSection
         issuesInPeriod={totalIssuesInPeriod || 0}
         issuesLast7Days={issuesLast7Days || 0}

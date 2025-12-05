@@ -25,7 +25,7 @@ const StaffInsightsSection = ({
     staff: StaffMember[];
     emptyMessage: string;
   }) => (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5 lg:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <h4 className="text-lg font-semibold text-gray-900">{title}</h4>
       {staff.length === 0 ? (
         <div className="mt-6 py-8 text-center">
@@ -49,7 +49,7 @@ const StaffInsightsSection = ({
                 <p className="text-sm font-semibold text-gray-900">
                   {member.averageRating.toFixed(1)} / 3
                 </p>
-                <p className="text-xs text-gray-500">{member.feedbackCount} feedback</p>
+                <p className="text-xs text-gray-500">{member.feedbackCount} voti</p>
               </div>
             </li>
           ))}
@@ -61,19 +61,19 @@ const StaffInsightsSection = ({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900">Insights sul personale</h3>
+        <h2 className="text-xl font-semibold text-gray-900">Riepilogo personale</h2>
         <p className="mt-1 text-sm text-gray-500">Migliori performance e aree di miglioramento</p>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <StaffList
-          title="Top staff nel periodo"
+          title="Migliori performer"
           staff={topStaff}
-          emptyMessage="Non ci sono ancora abbastanza dati sui membri dello staff nel periodo selezionato."
+          emptyMessage="Vedrai qui i migliori performer quando più ospiti inizieranno a votare."
         />
         <StaffList
-          title="Staff da monitorare"
+          title="Richiedono attenzione"
           staff={staffToMonitor}
-          emptyMessage="Non ci sono ancora abbastanza dati sui membri dello staff nel periodo selezionato."
+          emptyMessage="Vedrai qui i membri che richiedono attenzione quando più ospiti inizieranno a votare."
         />
       </div>
     </div>

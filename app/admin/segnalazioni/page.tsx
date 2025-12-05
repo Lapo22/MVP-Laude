@@ -44,6 +44,15 @@ export default async function AdminSegnalazioniPage() {
       notifyIssues: row.notify_issues,
     })) ?? [];
 
-  return <IssueDashboard initialIssues={issues} initialEmails={emails} />;
+  return (
+    <div className="space-y-6">
+      <div className="border-b border-gray-200 pb-4">
+        <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">Segnalazioni</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          Segnalazioni degli ospiti raccolte tramite la pagina QR code.
+        </p>
+      </div>
+      <IssueDashboard initialIssues={issues} initialEmails={emails} />
+    </div>
+  );
 }
-

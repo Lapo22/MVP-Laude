@@ -20,11 +20,11 @@ const NotificationBox = ({
   loading,
 }: NotificationBoxProps) => {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5 lg:p-6">
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Email notifiche segnalazioni</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Email notifiche</h3>
         <p className="mt-1 text-sm text-gray-500">
-          Aggiungi gli indirizzi che devono ricevere un avviso quando arriva una nuova segnalazione
+          Aggiungi gli indirizzi email che riceveranno avvisi quando un ospite invia una segnalazione
         </p>
       </div>
 
@@ -33,8 +33,8 @@ const NotificationBox = ({
           type="email"
           value={newEmail}
           onChange={(event) => onEmailChange(event.target.value)}
-          placeholder="esempio@hotel.com"
-          className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+          placeholder="email@esempio.com"
+          className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               onAddEmail();
@@ -45,27 +45,27 @@ const NotificationBox = ({
           type="button"
           onClick={onAddEmail}
           disabled={loading || !newEmail.trim()}
-          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1B2436] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Aggiungi email
         </button>
       </div>
 
       {emails.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-sm text-gray-500">Nessuna email configurata.</p>
+        <div className="py-8 text-center rounded-xl border border-dashed border-gray-200">
+          <p className="text-sm text-gray-500">Nessun indirizzo email configurato.</p>
         </div>
       ) : (
         <ul className="space-y-2">
           {emails.map((email) => (
             <li
               key={email.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+              className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
             >
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">{email.email}</p>
                 {email.notifyIssues && (
-                  <p className="mt-0.5 text-xs text-gray-500">Notifiche attive</p>
+                  <p className="mt-0.5 text-xs text-gray-500">Riceve notifiche per le segnalazioni</p>
                 )}
               </div>
               <button
@@ -73,7 +73,7 @@ const NotificationBox = ({
                 onClick={() => onRemoveEmail(email)}
                 className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:border-red-300"
               >
-                Elimina
+                Rimuovi
               </button>
             </li>
           ))}

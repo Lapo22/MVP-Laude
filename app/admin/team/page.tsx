@@ -50,9 +50,14 @@ export default async function AdminTeamPage() {
   const teams = mapTeams((teamRows ?? []) as TeamRow[]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <div className="border-b border-gray-200 pb-4">
+        <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">Team & Dipendenti</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          Gestisci i team e i dipendenti visibili ai tuoi ospiti
+        </p>
+      </div>
       <TeamManager initialTeams={teams} />
     </div>
   );
 }
-

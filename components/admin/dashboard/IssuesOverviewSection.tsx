@@ -23,26 +23,28 @@ const IssuesOverviewSection = ({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("it-IT", {
-      day: "2-digit",
-      month: "2-digit",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const truncateMessage = (message: string, maxLength: number = 70) => {
+  const truncateMessage = (message: string, maxLength: number = 80) => {
     if (message.length <= maxLength) return message;
     return `${message.substring(0, maxLength)}...`;
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5 lg:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Panoramica segnalazioni</h3>
-          <p className="mt-1 text-sm text-gray-500">Stato delle comunicazioni degli ospiti</p>
+          <h2 className="text-xl font-semibold text-gray-900">Riepilogo segnalazioni</h2>
+          <p className="mt-1 text-sm text-gray-500">Segnalazioni recenti degli ospiti</p>
         </div>
         <Link
           href="/admin/segnalazioni"
-          className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="text-sm font-medium text-[#0F172A] hover:text-[#1B2436] transition-colors"
         >
           Vedi tutte →
         </Link>
@@ -69,7 +71,7 @@ const IssuesOverviewSection = ({
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">Ultime segnalazioni</p>
+          <p className="text-sm font-medium text-gray-700">Più recenti</p>
           <ul className="space-y-2">
             {recentIssues.map((issue) => (
               <li
@@ -81,15 +83,15 @@ const IssuesOverviewSection = ({
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-gray-500">{formatDate(issue.createdAt)}</span>
                     {!issue.isRead && (
                       <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-                        Nuova
+                        Non letta
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-gray-700">{truncateMessage(issue.message)}</p>
+                  <p className="text-sm text-gray-700">{truncateMessage(issue.message)}</p>
                 </div>
               </li>
             ))}

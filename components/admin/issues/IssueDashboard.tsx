@@ -34,6 +34,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
     const payload = await response.json();
     if (response.ok) {
       setIssues(payload.issues ?? []);
+      setError(null);
     } else {
       setError(payload.error ?? "Impossibile aggiornare le segnalazioni.");
     }
@@ -44,6 +45,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
     const payload = await response.json();
     if (response.ok) {
       setEmails(payload.emails ?? []);
+      setError(null);
     } else {
       setError(payload.error ?? "Impossibile aggiornare le email di notifica.");
     }
@@ -51,6 +53,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
 
   const handleToggleIssue = async (issue: AdminIssue) => {
     try {
+      setError(null);
       const response = await fetch(`/api/admin/issues/${issue.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -76,6 +79,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
     }
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch("/api/admin/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,6 +101,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
   const handleRemoveEmail = async (email: AdminNotificationEmail) => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch("/api/admin/notifications", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -116,17 +121,13 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">Segnalazioni degli ospiti</h1>
-        <p className="mt-1 text-sm text-gray-500">Consulta le comunicazioni inviate tramite il QR in struttura</p>
-      </div>
-
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
       )}
 
+      {/* Filters */}
       <div className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
         {(["all", "unread", "read"] as IssueFilter[]).map((option) => (
           <button
@@ -135,7 +136,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
             onClick={() => setFilter(option)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               filter === option
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-[#0F172A] text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -144,10 +145,13 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
         ))}
       </div>
 
+      {/* Issues List */}
       <div className="space-y-3">
         {filteredIssues.length === 0 ? (
-          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
-            <p className="text-sm text-gray-500">Nessuna segnalazione disponibile per il filtro selezionato.</p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-sm text-gray-500">
+              Nessuna segnalazione disponibile per il filtro selezionato.
+            </p>
           </div>
         ) : (
           filteredIssues.map((issue) => (
@@ -156,6 +160,7 @@ const IssueDashboard = ({ initialIssues, initialEmails }: IssueDashboardProps) =
         )}
       </div>
 
+      {/* Notification Emails */}
       <NotificationBox
         emails={emails}
         newEmail={newEmail}

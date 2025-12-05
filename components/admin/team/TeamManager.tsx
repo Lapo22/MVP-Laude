@@ -43,23 +43,27 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
   const openCreateTeam = () => {
     setTeamName("");
     setTeamForm({ mode: "create" });
+    setError(null);
   };
 
   const openRenameTeam = (team: AdminTeam) => {
     setTeamName(team.name);
     setTeamForm({ mode: "rename", team });
+    setError(null);
   };
 
   const openCreateEmployee = (team: AdminTeam) => {
     setEmployeeName("");
     setEmployeeRole("");
     setEmployeeForm({ mode: "create", team });
+    setError(null);
   };
 
   const openEditEmployee = (team: AdminTeam, employee: AdminEmployee) => {
     setEmployeeName(employee.name);
     setEmployeeRole(employee.role);
     setEmployeeForm({ mode: "edit", team, employee });
+    setError(null);
   };
 
   const refreshTeams = useCallback(async () => {
@@ -82,6 +86,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
 
     try {
       setLoading(true);
+      setError(null);
       if (teamForm.mode === "create") {
         const response = await fetch("/api/admin/teams", {
           method: "POST",
@@ -107,6 +112,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
       }
       setTeamForm(null);
       await refreshTeams();
+      setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Si è verificato un errore.");
     } finally {
@@ -117,6 +123,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
   const handleToggleTeam = async (team: AdminTeam) => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/admin/teams/${team.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -138,6 +145,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
     if (!confirmState || confirmState.type !== "deleteTeam") return;
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/admin/teams/${confirmState.team.id}`, {
         method: "DELETE",
       });
@@ -148,6 +156,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
       setMessage("Team eliminato con successo.");
       setConfirmState(null);
       await refreshTeams();
+      setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Si è verificato un errore.");
     } finally {
@@ -158,12 +167,13 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
   const handleCreateOrEditEmployee = async () => {
     if (!employeeForm) return;
     if (!employeeName.trim() || !employeeRole.trim()) {
-      setError("Nome e ruolo del dipendente sono obbligatori.");
+      setError("Nome e ruolo sono obbligatori.");
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
       if (employeeForm.mode === "create") {
         const response = await fetch("/api/admin/employees", {
           method: "POST",
@@ -197,6 +207,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
 
       setEmployeeForm(null);
       await refreshTeams();
+      setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Si è verificato un errore.");
     } finally {
@@ -207,6 +218,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
   const handleToggleEmployee = async (employee: AdminEmployee) => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/admin/employees/${employee.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -228,6 +240,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
     if (!confirmState || confirmState.type !== "deleteEmployee") return;
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/admin/employees/${confirmState.employee.id}`, {
         method: "DELETE",
       });
@@ -238,6 +251,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
       setMessage("Dipendente eliminato con successo.");
       setConfirmState(null);
       await refreshTeams();
+      setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Si è verificato un errore.");
     } finally {
@@ -254,38 +268,38 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">Team & Dipendenti</h1>
-          <p className="mt-1 text-sm text-gray-500">Gestisci i team e il personale visibile ai tuoi ospiti</p>
-          <p className="mt-2 text-xs text-gray-400">
-            Team attivi: {activeTeamCount} · Dipendenti complessivi:{" "}
-            {teams.reduce((acc, team) => acc + team.employees.length, 0)}
+          <h2 className="text-lg font-semibold text-gray-900">Team</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {activeTeamCount} attivi · {teams.reduce((acc, team) => acc + team.employees.length, 0)} dipendenti totali
           </p>
         </div>
         <button
           type="button"
           onClick={openCreateTeam}
-          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1B2436]"
         >
           Aggiungi team
         </button>
       </div>
 
       {message && (
-        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           {message}
         </div>
       )}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {teams.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Non hai ancora creato team. Usa “Aggiungi team” per iniziare.
-          </p>
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-sm text-gray-500">
+              Nessun team presente. Usa "Aggiungi team" per iniziare.
+            </p>
+          </div>
         ) : (
           teams.map((team) => (
             <TeamCard
@@ -306,7 +320,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
       {/* Team Modal */}
       <Modal
         open={Boolean(teamForm)}
-        title={teamForm?.mode === "create" ? "Nuovo team" : "Rinomina team"}
+        title={teamForm?.mode === "create" ? "Crea team" : "Rinomina team"}
         onClose={() => setTeamForm(null)}
       >
         <label className="block text-sm font-medium text-gray-700">
@@ -314,11 +328,12 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
           <input
             value={teamName}
             onChange={(event) => setTeamName(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
-            placeholder="Es. Reception"
+            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10"
+            placeholder="es. Reception"
+            autoFocus
           />
         </label>
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={() => setTeamForm(null)}
@@ -330,9 +345,9 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
             type="button"
             disabled={loading}
             onClick={handleCreateOrRenameTeam}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1B2436] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Salvataggio…" : "Salva"}
+            {loading ? "Salvataggio…" : teamForm?.mode === "create" ? "Crea team" : "Salva modifiche"}
           </button>
         </div>
       </Modal>
@@ -342,30 +357,33 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
         open={Boolean(employeeForm)}
         title={
           employeeForm?.mode === "create"
-            ? `Nuovo dipendente · ${employeeForm.team.name}`
+            ? `Aggiungi dipendente · ${employeeForm.team.name}`
             : `Modifica dipendente · ${employeeForm?.team.name}`
         }
         onClose={() => setEmployeeForm(null)}
       >
-        <label className="block text-sm font-medium text-gray-700">
-          Nome
-          <input
-            value={employeeName}
-            onChange={(event) => setEmployeeName(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
-            placeholder="Es. Maria Rossi"
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Ruolo
-          <input
-            value={employeeRole}
-            onChange={(event) => setEmployeeRole(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
-            placeholder="Es. Concierge"
-          />
-        </label>
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Nome
+            <input
+              value={employeeName}
+              onChange={(event) => setEmployeeName(event.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10"
+              placeholder="es. Mario Rossi"
+              autoFocus
+            />
+          </label>
+          <label className="block text-sm font-medium text-gray-700">
+            Ruolo
+            <input
+              value={employeeRole}
+              onChange={(event) => setEmployeeRole(event.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0F172A]/10"
+              placeholder="es. Concierge"
+            />
+          </label>
+        </div>
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={() => setEmployeeForm(null)}
@@ -377,9 +395,9 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
             type="button"
             disabled={loading}
             onClick={handleCreateOrEditEmployee}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-[#0F172A] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1B2436] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Salvataggio…" : "Salva"}
+            {loading ? "Salvataggio…" : employeeForm?.mode === "create" ? "Aggiungi dipendente" : "Salva modifiche"}
           </button>
         </div>
       </Modal>
@@ -389,17 +407,17 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
         open={Boolean(confirmState)}
         title={
           confirmState?.type === "deleteTeam"
-            ? "Elimina definitivamente questo team?"
-            : "Elimina definitivamente questo dipendente?"
+            ? "Eliminare questo team?"
+            : "Eliminare questo dipendente?"
         }
         onClose={() => setConfirmState(null)}
       >
         <p className="text-sm text-gray-600">
           {confirmState?.type === "deleteTeam"
-            ? "Perderai tutti i dipendenti e i voti associati a questo team. Questa azione non può essere annullata."
-            : "Perderai i voti associati a questo dipendente. Questa azione non può essere annullata."}
+            ? "Sei sicuro di voler eliminare questo team? Tutti i voti associati verranno rimossi. Questa azione non può essere annullata."
+            : "Sei sicuro di voler eliminare questo dipendente? Tutti i voti associati verranno rimossi. Questa azione non può essere annullata."}
         </p>
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
             onClick={() => setConfirmState(null)}
@@ -411,7 +429,7 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
             type="button"
             disabled={loading}
             onClick={confirmState?.type === "deleteTeam" ? handleDeleteTeam : handleDeleteEmployee}
-            className="inline-flex items-center justify-center rounded-xl border border-red-300 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 hover:border-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl border border-red-300 bg-white px-5 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:border-red-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Eliminazione…" : "Elimina"}
           </button>
@@ -422,4 +440,3 @@ const TeamManager = ({ initialTeams }: TeamManagerProps) => {
 };
 
 export default TeamManager;
-
